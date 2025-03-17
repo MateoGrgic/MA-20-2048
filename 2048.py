@@ -16,6 +16,7 @@ def display_game():
 
 
 already_win = False
+timer_value = 0
 
 def win_game():
     global already_win
@@ -90,13 +91,13 @@ def pack_4(d, e, f, g):
     return [d, e, f, g, move]
 
 
-def spawn_tile(): #ChatGPT
+def spawn_tile(): #Aide avec ChatGPT : comment faire pour que la tuile 2 est 80% d apparition et 20% pour la 4
     # Trouver toutes les cases vides
     empty_positions = [(i, j) for i in range(4) for j in range(4) if number[i][j] == 0]
 
     if empty_positions:
         i, j = random.choice(empty_positions)  # Choisir une position vide aléatoire
-        number[i][j] = random.choice([2, 4])  # Ajouter un 2 ou un 4 (90% de chance d'obtenir un 2)
+        number[i][j] = random.choices([2, 4], weights=[80, 20])[0]  # 80% pour 2, 20% pour 4
         display_game()  # Mettre à jour l'affichage
 
 def move_and_spawn(move_function, event): #ChatGPT
@@ -160,16 +161,67 @@ def _tasse_down(event):
 def restart():
     global number, already_win
     already_win = False
-    number = [[2, 0, 0, 2],
+    number = [[2, 0, 0, 0],
               [0, 0, 0, 0],
-              [0, 2, 2, 0],
+              [0, 2, 0, 0],
               [0, 0, 0, 0]]
+
+    restart_timer()
+
     display_game()
 
+def exit():
+    quit()
+
+def random_col(): # Aide avec ChatGPT : comment faire sans liste et que les couleur soit vrmt aléatoire
+    digits = {
+        10: "A",
+        11: "B",
+        12: "C",
+        13: "D",
+        14: "E",
+        15: "F"
+    }
+    color = "#"
+    for i in range(6):
+        digit = random.randint(0,15)
+        if digit in digits:
+            digit = digits[digit]
+        color += str(digit)
+    return color
+    #return "#{:06x}".format(random.randint(0, 0x FF FF FF))
+
+def change_color(): # Aide avec chatgpt pour la ligne 180 et 181
+    new_color = random_col()
+    frame_score_reset.config(bg=new_color)
+    frame_tableau.config(bg=new_color)
+    frame_quitter.config(bg=new_color)
+    btn_random_col.config(bg=new_color)
+    btn_reset.config(bg=new_color)
+    btn_quitter.config(bg=new_color)
+    window.config(bg=new_color)
+    lbl_timer.config(bg=new_color)
+
+def restart_timer():
+    # cette fonction sert a quand on appuie sur le bouton "Nouveau", le timer ce remet a 0
+    global timer_value
+    timer_value = 0
+    lbl_timer.config(text=f"Temps: {timer_value} s")
+
+def update_timer():
+    # cette fonction ajoute des secondes (1s, 2s...)
+    global timer_value
+    timer_value += 1
+    lbl_timer.config(text=f"Temps: {timer_value} s")
+    window.after(1000, update_timer)
+
+
+
+
 # Initialisation du tableau de jeu
-number = [[2, 0, 0, 2],
+number = [[2, 0, 0, 0],
          [0, 0, 0, 0],
-         [0, 2, 2, 0],
+         [0, 2, 0, 0],
          [0, 0, 0, 0]]
 
 # Couleurs associées aux nombres
@@ -193,7 +245,7 @@ color = {
 # Création de la fenêtre principale
 window = Tk()
 window.title("2048")
-window.geometry("600x600")
+window.geometry("650x650")
 window.config(bg="black")
 
 # Frame pour le score et le bouton "Recommencer"
@@ -201,16 +253,31 @@ frame_score_reset = Frame(window, bg="black")
 frame_score_reset.pack(fill=X)
 
 # Frame pour le tableau de jeu
-frame_tableau = LabelFrame(window, bg="black")
+frame_tableau = Frame(window, bg="black")
 frame_tableau.pack()
 
-# Label pour afficher le score
-label_score = Label(frame_score_reset, text="Score :", font=("Arial", 25, "bold"), fg="white", bg="black")
-label_score.pack(side=LEFT)
+# Frame pour le btn quitter le jeu
+frame_quitter = Frame(window, bg="black")
+frame_quitter.pack(fill=X)
+
+#Label
+lbl_timer = Label(frame_score_reset, text=f"Temps: {timer_value} s", font=("Arial", 25, "bold"), fg="white", bg="black")
+lbl_timer.pack(side=RIGHT)
+
+
 
 # Bouton "Recommencer"
 btn_reset = Button(frame_score_reset, text="Recommencer", font=("Arial", 25, "bold"), fg="white", bg="black",command=restart)
-btn_reset.pack(side=RIGHT)
+btn_reset.pack(side=LEFT)
+
+# Bouton "Quitter"
+btn_quitter = Button(frame_quitter, text="Quitter", font=("Arial", 25, "bold"), fg="white", bg="black",command=exit)
+btn_quitter.pack(side=LEFT)
+
+# Bouton "Quitter"
+btn_random_col = Button(frame_quitter, text="Couleur", font=("Arial", 25, "bold"), fg="white", bg="black",command=change_color)
+btn_random_col.pack(side=RIGHT)
+
 
 # Création des cases du tableau
 case = [
@@ -240,6 +307,8 @@ window.bind("<Left>", tasse_left)
 window.bind("<Right>", tasse_right)
 window.bind("<Up>", tasse_up)
 window.bind("<Down>", tasse_down)
+
+update_timer()
 
 # Affichage de la fenêtre
 window.mainloop()
